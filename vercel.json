@@ -5,6 +5,7 @@
   "outputDirectory": "frontend/.next",
   "rewrites": [
     { "source": "/svg", "destination": "/api/svg" },
+    { "source": "/svg/", "destination": "/api/svg" },
     { "source": "/healthz", "destination": "/api/healthz" }
   ]
 }
