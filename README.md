@@ -155,7 +155,7 @@ This fork supports deploying the **frontend + SVG API** as a single [Vercel](htt
 Locally you can preview the production build with:
 
 ```shell
-cd frontend && pnpm i && pnpm run build:vercel && pnpm start
+pnpm i && cd gh && pnpm i && pnpm run star:generate && cd ../frontend && pnpm i && pnpm run build:vercel && pnpm start
 ```
 
 > Tip: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://<your-app>.vercel.app`) if you want absolute URLs in SEO metadata (og:url, canonical).
