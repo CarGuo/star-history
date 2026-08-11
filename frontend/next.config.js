@@ -17,6 +17,12 @@ const nextConfig = {
     webpack: (config, { defaultLoaders }) => {
         config.resolve.alias["@shared"] = sharedDir;
         config.resolve.alias["@gh-data"] = ghDataDir;
+        // Backend/shared use ESM-style ".js" import specifiers that actually
+        // point to .ts/.tsx sources; teach webpack how to resolve them.
+        config.resolve.extensionAlias = {
+            ...(config.resolve.extensionAlias ?? {}),
+            ".js": [".ts", ".tsx", ".js"],
+        };
         // Ensure shared/ and backend/ code can resolve packages from
         // frontend/node_modules, and preserve bare-import resolution
         // (e.g. "store", "helpers/toast") by including the frontend
