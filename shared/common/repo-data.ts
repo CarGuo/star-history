@@ -4,7 +4,9 @@ import type { RepoCardData } from "../types/gh.js";
 
 const DEFAULT_MIN_STARS = 50000;
 
-const REPOS_PATH = path.join(process.cwd(), "..", "gh", "data", "repos.json");
+const REPOS_PATH = [process.env.REPOS_DATA_PATH, path.join(process.cwd(), "..", "gh", "data", "repos.json")].find(
+  (p): p is string => typeof p === "string" && p.length > 0 && fs.existsSync(p)
+) ?? path.join(process.cwd(), "..", "gh", "data", "repos.json");
 
 export interface RepoStore {
   min_stars: number;

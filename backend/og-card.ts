@@ -25,7 +25,18 @@ let interFont: Buffer;
 let logoBase64: string;
 
 export function initOgAssets() {
-  const dir = path.join(process.cwd(), "assets");
+  // In the container the cwd is backend/. In serverless bundles (e.g. Vercel)
+  // the assets are included relative to this file via outputFileTracingIncludes.
+  const candidates = [
+    path.join(process.cwd(), "assets"),
+    path.join(__dirname, "assets"),
+    path.join(__dirname, "..", "assets"),
+    path.join(__dirname, "..", "..", "backend", "assets"),
+  ];
+  const dir = candidates.find((d) => fs.existsSync(path.join(d, "xkcd.ttf")));
+  if (!dir) {
+    throw new Error(`OG assets directory not found, tried: ${candidates.join(", ")}`);
+  }
   xkcdFont = fs.readFileSync(path.join(dir, "xkcd.ttf"));
   interFont = fs.readFileSync(path.join(dir, "Inter.ttf"));
   logoBase64 = `data:image/png;base64,${fs

@@ -129,7 +129,8 @@ const RepoPage: NextPage<RepoPageProps> = ({ repo, minStars, prevRepo, nextRepo 
     ].filter(Boolean)
     const description = weeklyParts.length ? `This week: ${weeklyParts.join(", ")}` : `Star history and stats for ${repo.name}`
     const canonicalUrl = `${SITE_URL}/${repo.name.toLowerCase()}`
-    const ogImage = `${API_URL}/svg?repos=${repo.name}&style=landscape1`
+    // og:image needs an absolute URL; fall back to SITE_URL when API_URL is relative (Vercel).
+    const ogImage = `${API_URL || SITE_URL}/svg?repos=${repo.name}&style=landscape1`
     const tweetText = `${repo.name} - ${formatNumber(repo.stars_total)} stars on GitHub`
     const tweetUrl = `https://x.com/intent/tweet?url=${encodeURIComponent(canonicalUrl)}&text=${encodeURIComponent(tweetText)}`
 

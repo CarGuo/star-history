@@ -41,6 +41,7 @@
   ],
   "exclude": [
     "node_modules",
-    "server"
+    "server",
+    "pages/api"
   ]
 }

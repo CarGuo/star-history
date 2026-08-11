@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pnpm install && cd frontend && pnpm install",
+  "buildCommand": "cd gh && pnpm install && pnpm run star:generate && cd ../frontend && pnpm run build:vercel",
+  "outputDirectory": "frontend/.next",
+  "rewrites": [
+    { "source": "/svg", "destination": "/api/svg" },
+    { "source": "/svg/", "destination": "/api/svg" },
+    { "source": "/healthz", "destination": "/api/healthz" }
+  ]
+}
