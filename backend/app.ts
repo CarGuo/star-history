@@ -13,7 +13,7 @@ import {
   fixJsdomSvgCasing,
   getBase64Image,
 } from "./utils.js";
-import { getNextToken, markTokenExhausted } from "./token.js";
+import { getNextToken, getTokenStatus, markTokenExhausted } from "./token.js";
 import { CHART_SIZES, MAX_REQUEST_AMOUNT, MAX_REPOS_PER_REQUEST } from "./const.js";
 import { renderOgCard } from "./og-card.js";
 import type { RepoStore } from "../shared/common/repo-data.js";
@@ -48,6 +48,7 @@ export const createApp = (repoStore: RepoStore) => {
     return c.json({
       status: "OK",
       commit: process.env.GIT_COMMIT || "unknown",
+      githubToken: getTokenStatus(),
       cache: getAllCacheStats(),
     }, 200);
   });

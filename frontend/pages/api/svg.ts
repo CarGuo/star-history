@@ -1,10 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import { getVercelApp } from "../../../backend/vercel"
 
+// Four-repository charts currently take about 20 seconds on a cold cache.
+// Keep legacy (non-Fluid) Vercel projects within the Hobby plan's 60s limit.
+export const maxDuration = 60
+
 // Renders the star history SVG chart (and OG cards) via the shared Hono app.
 // Mirrors the backend /svg endpoint so embedded chart URLs keep working.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const app = getVercelApp()
+    let app
+    try {
+        app = await getVercelApp()
+    } catch (error) {
+        console.error("Failed to initialize the SVG API", error)
+        res.status(503).send("GitHub token initialization failed")
+        return
+    }
     const qs = (req.url ?? "").replace(/^[^?]*/, "")
     const host = req.headers.host ?? "localhost"
     const proto = (req.headers["x-forwarded-proto"] as string) ?? "https"

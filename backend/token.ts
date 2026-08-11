@@ -13,6 +13,8 @@ const envFilePath = process.env.ENVPATH || ENV_PATH_IN_RENDER;
 
 const savedTokens: string[] = [];
 let index = 0;
+let configuredTokenCount = 0;
+let tokenSource: "GITHUB_TOKENS" | "GITHUB_TOKEN" | "file" | "none" = "none";
 
 // Tokens that hit rate limit are cooled down for 15 minutes.
 const COOLDOWN_MS = 15 * 60 * 1000;
@@ -25,70 +27,75 @@ const parseTokens = (raw: string): string[] =>
     .map((t) => t.trim())
     .filter(Boolean);
 
-export const initTokenFromEnv = async () => {
+const loadConfiguredTokens = (): string[] => {
   // Serverless platforms (e.g. Vercel) inject secrets via env variables instead of files.
   // Use GITHUB_TOKENS (comma separated) or GITHUB_TOKEN there.
-  const envTokens = process.env.GITHUB_TOKENS || process.env.GITHUB_TOKEN;
-  let tokenList: string[];
-  if (envTokens) {
-    tokenList = parseTokens(envTokens);
-  } else {
-    if (!fs.existsSync(envFilePath)) {
-      logger.error("Token file not found with path ", envFilePath);
-      process.exit(-1);
-    }
-    const envTokenString = fs.readFileSync(envFilePath).toString();
-    if (!envTokenString) {
-      logger.error("Token not found");
-      process.exit(-1);
-    }
-    tokenList = parseTokens(envTokenString);
+  if (process.env.GITHUB_TOKENS) {
+    tokenSource = "GITHUB_TOKENS";
+    return parseTokens(process.env.GITHUB_TOKENS);
+  }
+  if (process.env.GITHUB_TOKEN) {
+    tokenSource = "GITHUB_TOKEN";
+    return parseTokens(process.env.GITHUB_TOKEN);
+  }
+  if (!fs.existsSync(envFilePath)) {
+    throw new Error(`Token file not found with path ${envFilePath}`);
+  }
+  tokenSource = "file";
+  return parseTokens(fs.readFileSync(envFilePath).toString());
+};
+
+// 2026-08: Vercel must validate injected secrets during cold start. The old
+// lazy loader accepted stale/invalid values and later cached GitHub 404s as
+// empty charts, making deployment configuration failures look like chart bugs.
+export const initTokens = async () => {
+  if (savedTokens.length > 0) {
+    return;
+  }
+  const tokenList = loadConfiguredTokens();
+  configuredTokenCount = tokenList.length;
+  if (configuredTokenCount === 0) {
+    throw new Error("No GitHub token configured");
   }
 
-  // Call GitHub API to check token usability
+  // Validate authentication only. Stargazer access is repository-specific and
+  // is verified against the repositories requested by each chart.
   for (const token of tokenList) {
     try {
-      await api.getRepoStargazersCount("star-history/star-history", token);
+      await api.getAuthenticatedUser(token);
       savedTokens.push(token);
-    } catch (error) {
-      logger.error(`Token ${token.slice(0, 8)}...${token.slice(-4)} is unusable`, error);
+    } catch (error: any) {
+      const status = error?.response?.status ?? "unknown";
+      logger.error(`A configured GitHub token is unusable (GitHub status: ${status})`);
     }
   }
 
   if (savedTokens.length === 0) {
-    logger.error("No usable token");
-    process.exit(-1);
+    throw new Error("No usable GitHub token configured");
   }
 
   logger.info(`Usable token amount: ${savedTokens.length}`);
 };
 
-// Lazily load tokens without validating them against the GitHub API.
-// Intended for serverless environments where init must be cheap and
-// process.exit would kill the whole runtime. Invalid tokens will simply
-// be marked as exhausted when requests hit the rate limit.
-export const initTokensLazy = () => {
-  if (savedTokens.length > 0) {
-    return;
-  }
-  const envTokens = process.env.GITHUB_TOKENS || process.env.GITHUB_TOKEN;
-  if (envTokens) {
-    savedTokens.push(...parseTokens(envTokens));
-    return;
-  }
+export const initTokenFromEnv = async () => {
   try {
-    if (fs.existsSync(envFilePath)) {
-      savedTokens.push(...parseTokens(fs.readFileSync(envFilePath).toString()));
-    }
+    await initTokens();
   } catch (error) {
-    logger.error("Failed to load tokens lazily", error);
+    logger.error("Failed to initialize GitHub tokens", error);
+    process.exit(-1);
   }
 };
+
+export const getTokenStatus = () => ({
+  source: tokenSource,
+  configuredCount: configuredTokenCount,
+  usableCount: savedTokens.length,
+});
 
 // Mark a token as rate-limited so it is skipped for COOLDOWN_MS.
 export const markTokenExhausted = (token: string) => {
   exhaustedUntil.set(token, Date.now() + COOLDOWN_MS);
-  logger.warn(`Token ${token.slice(0, 8)}... rate-limited, cooling down for ${COOLDOWN_MS / 60000}m`);
+  logger.warn(`A GitHub token was rate-limited, cooling down for ${COOLDOWN_MS / 60000}m`);
 };
 
 // Get the next available token, skipping rate-limited ones.

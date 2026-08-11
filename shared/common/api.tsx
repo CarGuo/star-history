@@ -3,6 +3,13 @@ import utils from "./utils"
 
 const API_PER_PAGE = 100  // GitHub API max items per request
 const REQUEST_TIMEOUT_MS = 15000  // 15s timeout for GitHub API calls
+const GITHUB_API_VERSION = "2026-03-10"
+
+const getGitHubHeaders = (token?: string, accept = "application/vnd.github+json") => ({
+    Accept: accept,
+    "X-GitHub-Api-Version": GITHUB_API_VERSION,
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+})
 
 namespace api {
     export async function getRepoStargazers(repo: string, token?: string, page?: number) {
@@ -12,20 +19,14 @@ namespace api {
             url = `${url}&page=${page}`
         }
         return axios.get(url, {
-            headers: {
-                Accept: "application/vnd.github.v3.star+json",
-                Authorization: token ? `token ${token}` : ""
-            },
+            headers: getGitHubHeaders(token, "application/vnd.github.star+json"),
             timeout: REQUEST_TIMEOUT_MS,
         })
     }
 
     export async function getRepoStargazersCount(repo: string, token?: string) {
         const { data } = await axios.get(`https://api.github.com/repos/${repo}`, {
-            headers: {
-                Accept: "application/vnd.github.v3.star+json",
-                Authorization: token ? `token ${token}` : ""
-            },
+            headers: getGitHubHeaders(token),
             timeout: REQUEST_TIMEOUT_MS,
         })
 
@@ -117,14 +118,20 @@ namespace api {
     export async function getRepoLogoUrl(repo: string, token?: string): Promise<string> {
         const owner = repo.split("/")[0]
         const { data } = await axios.get(`https://api.github.com/users/${owner}`, {
-            headers: {
-                Accept: "application/vnd.github.v3.star+json",
-                Authorization: token ? `token ${token}` : ""
-            },
+            headers: getGitHubHeaders(token),
             timeout: REQUEST_TIMEOUT_MS,
         })
 
         return data.avatar_url
+    }
+
+    export async function getAuthenticatedUser(token: string): Promise<string> {
+        const { data } = await axios.get("https://api.github.com/user", {
+            headers: getGitHubHeaders(token),
+            timeout: REQUEST_TIMEOUT_MS,
+        })
+
+        return data.login
     }
 }
 

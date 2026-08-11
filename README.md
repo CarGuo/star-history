@@ -151,7 +151,10 @@ This fork supports deploying the **frontend + SVG API** as a single [Vercel](htt
 2. **Add a GitHub token** in *Project Settings → Environment Variables* (used by the API to fetch star histories from the GitHub API):
    - `GITHUB_TOKEN` — a single token, or
    - `GITHUB_TOKENS` — multiple comma-separated tokens (rotated automatically).
+   Since GitHub's July 2026 stargazer API restriction, the token owner must be an admin or collaborator of every repository whose history is requested. See the [GitHub announcement](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/).
 3. **Deploy.** Every push to the default branch triggers a new deployment automatically.
+
+For README embeds and other anonymous clients, disable **Vercel Authentication** for the Production environment in *Project Settings → Deployment Protection*. Preview deployments can remain protected.
 
 Locally you can preview the production build with:
 

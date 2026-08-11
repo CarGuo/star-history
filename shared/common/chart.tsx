@@ -9,7 +9,38 @@ export interface ChartDataOptions {
 
 export const DEFAULT_MAX_REQUEST_AMOUNT = 15
 
-const STAR_HISTORY_LOGO_URL = "https://avatars.githubusercontent.com/u/124480067"
+const getRepoRequestError = async (error: any, repo: string, token: string) => {
+    const responseStatus = error?.response?.status ?? error?.status
+    let message = "Some unexpected error happened, try again later"
+    let status = 500
+
+    if (responseStatus === 404) {
+        // 2026-08: GitHub conceals restricted stargazer lists as 404. Probe the
+        // public repository metadata so permission failures are not reported as
+        // missing repositories or cached as successful zero-star charts.
+        try {
+            await api.getRepoStargazersCount(repo, token)
+            message = `GitHub token cannot access stargazer history for ${repo}; the token owner must be a repository admin or collaborator`
+            status = 403
+        } catch (metadataError: any) {
+            if ((metadataError?.response?.status ?? metadataError?.status) === 404) {
+                message = `Repo ${repo} not found`
+                status = 404
+            }
+        }
+    } else if (responseStatus === 403) {
+        message = "GitHub API rate limit exceeded or stargazer access is restricted"
+        status = 403
+    } else if (responseStatus === 401) {
+        message = "Access Token Unauthorized"
+        status = 401
+    } else if (Array.isArray(error?.data) && error.data.length === 0) {
+        message = `Repo ${repo} has no star history`
+        status = 501
+    }
+
+    return { message, status, repo }
+}
 
 export const getReposStarData = async (repos: string[], token = "", maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoStarData[]> => {
     const repoStarDataCacheMap = new Map()
@@ -19,30 +50,7 @@ export const getReposStarData = async (repos: string[], token = "", maxRequestAm
             const starRecords = await api.getRepoStarRecords(repo, token, maxRequestAmount)
             repoStarDataCacheMap.set(repo, starRecords)
         } catch (error: any) {
-            let message = ""
-            let status = 500
-
-            if (error?.response?.status === 404) {
-                message = `Repo ${repo} not found`
-                status = 404
-            } else if (error?.response?.status === 403) {
-                message = "GitHub API rate limit exceeded"
-                status = 403
-            } else if (error?.response?.status === 401) {
-                message = "Access Token Unauthorized"
-                status = 401
-            } else if (Array.isArray(error?.data) && error.data?.length === 0) {
-                message = `Repo ${repo} has no star history`
-                status = 501
-            } else {
-                message = "Some unexpected error happened, try again later"
-            }
-
-            return Promise.reject({
-                message,
-                status,
-                repo
-            })
+            return Promise.reject(await getRepoRequestError(error, repo, token))
         }
     }
 
@@ -82,48 +90,9 @@ export const getRepoData = async (repos: string[], token = "", maxRequestAmount 
             ])
             repoDataCacheMap.set(repo, { star: starRecords, logo })
         } catch (error: any) {
-            let message = ""
-            let status = 500
-
-            if (error?.response?.status === 404) {
-                message = `Repo ${repo} not found`
-                status = 404
-            } else if (error?.response?.status === 403) {
-                message = "GitHub API rate limit exceeded"
-                status = 403
-            } else if (error?.response?.status === 401) {
-                message = "Access Token Unauthorized"
-                status = 401
-            } else if (Array.isArray(error?.data) && error.data?.length === 0) {
-                message = `Repo ${repo} has no star history`
-                status = 501
-            } else {
-                message = "Some unexpected error happened, try again later"
-            }
-
-            console.error("Failed to request data:", status, message)
-
-            // If encountering not found or no star error, we will return an empty image so that cache can be set.
-            if (status === 404 || status === 501) {
-                return [
-                    {
-                        repo,
-                        starRecords: [
-                            {
-                                date: utils.getDateString(Date.now(), "yyyy/MM/dd"),
-                                count: 0
-                            }
-                        ],
-                        logoUrl: STAR_HISTORY_LOGO_URL
-                    }
-                ]
-            }
-
-            return Promise.reject({
-                message,
-                status,
-                repo
-            })
+            const requestError = await getRepoRequestError(error, repo, token)
+            console.error("Failed to request data:", requestError.status, requestError.message)
+            return Promise.reject(requestError)
         }
     }
 

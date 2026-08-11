@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx main.ts",
-    "build": "tsc --project ./"
+    "build": "tsc --project ./",
+    "test": "tsx --test chart.test.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.1",
