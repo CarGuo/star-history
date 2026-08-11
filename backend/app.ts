@@ -62,11 +62,20 @@ export const createApp = (repoStore: RepoStore) => {
       return await next();
     }
 
-    // Lowercase repo names (GitHub is case-insensitive)
-    const normalized = repos.split(",").map((r) => r.trim().toLowerCase()).filter(Boolean).join(",");
+    // Lowercase repo names (GitHub is case-insensitive). Keep the query
+    // string in decoded form — re-encoding it would turn `/` into `%2F` and
+    // double-encode downstream (e.g. when Next.js rewrites the redirect).
+    const parts = repos.split(",").map((r) => r.trim().toLowerCase()).filter(Boolean);
+    const normalized = parts.join(",");
     if (normalized !== repos) {
-      params.set("repos", normalized);
-      return c.redirect(`${url.pathname}?${params.toString()}`, 301);
+      // Redirect within the app itself (/api/svg) so the follow-up request
+      // never round-trips through the /svg → /api/svg rewrite (which would
+      // re-encode the query and break `repos=a/b`).
+      const others = Array.from(params.entries())
+        .filter(([key]) => key !== "repos")
+        .map(([key, value]) => (value === "" ? key : `${key}=${value}`))
+        .join("&");
+      return c.redirect(`/api/svg?repos=${normalized}${others ? `&${others}` : ""}`, 301);
     }
 
     return await next();

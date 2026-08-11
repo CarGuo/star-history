@@ -14,6 +14,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             headers.set(key, value)
         }
     }
+    // Pass the raw (encoded) query string through unchanged. Decoding and
+    // re-encoding here would double-encode values like `repos=a/b` when
+    // Vercel's /svg → /api/svg rewrite is in the loop.
     const request = new Request(`${proto}://${host}/svg${qs}`, {
         method: "GET",
         headers,
