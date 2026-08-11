@@ -14,6 +14,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             headers.set(key, value)
         }
     }
+    // Vercel adapter contract: Next.js owns the client-facing compression.
+    // Forwarding Accept-Encoding would make Hono compress the internal response;
+    // Next.js then drops/recomputes Content-Encoding and serves gzip bytes as XML.
+    headers.delete("accept-encoding")
     // Pass the raw (encoded) query string through unchanged. Decoding and
     // re-encoding here would double-encode values like `repos=a/b` when
     // Vercel's /svg → /api/svg rewrite is in the loop.
