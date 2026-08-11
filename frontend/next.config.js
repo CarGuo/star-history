@@ -14,6 +14,17 @@ const nextConfig = {
             "/api/healthz": ["../backend/assets/**"],
         },
     },
+    // These rewrites must live here (routes-manifest.json), not in the root
+    // vercel.json: vercel.json rewrites are filesystem-aware on Vercel, and
+    // with the Next.js pages dir present /svg never reaches /api/svg (404).
+    // routes-manifest rewrites are evaluated at routing time and do match.
+    async rewrites() {
+        return [
+            { source: "/svg", destination: "/api/svg" },
+            { source: "/svg/", destination: "/api/svg" },
+            { source: "/healthz", destination: "/api/healthz" },
+        ];
+    },
     webpack: (config, { defaultLoaders }) => {
         config.resolve.alias["@shared"] = sharedDir;
         config.resolve.alias["@gh-data"] = ghDataDir;
