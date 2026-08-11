@@ -15,6 +15,11 @@ const EmbedChart: React.FC = () => {
 
     const repoText = singleRepo ? singleRepo.split("/")[1] : "your repository's"
 
+    // Embed codes need absolute URLs (they are pasted into external READMEs).
+    // When API_URL is relative (Vercel same-origin), resolve against the current origin.
+    const apiBase =
+        API_URL || (typeof window !== "undefined" ? window.location.origin : "")
+
     const buildQueryParams = (theme?: string) => {
         const type = store.chartMode === "Date" ? "date" : "timeline"
         let params = `repos=${store.repos.join(",")}&type=${type}`
@@ -24,9 +29,9 @@ const EmbedChart: React.FC = () => {
         return params
     }
 
-    const embedCode = `## Star History\n\n[![Star History Chart](${API_URL}/svg?${buildQueryParams()})](${typeof window !== "undefined" ? window.location.href : ""})`
+    const embedCode = `## Star History\n\n[![Star History Chart](${apiBase}/svg?${buildQueryParams()})](${typeof window !== "undefined" ? window.location.href : ""})`
 
-    const embedDarkModeCode = `## Star History\n\n<a href="${typeof window !== "undefined" ? window.location.href : ""}">\n <picture>\n   <source media="(prefers-color-scheme: dark)" srcset="${API_URL}/svg?${buildQueryParams("dark")}" />\n   <source media="(prefers-color-scheme: light)" srcset="${API_URL}/svg?${buildQueryParams()}" />\n   <img alt="Star History Chart" src="${API_URL}/svg?${buildQueryParams()}" />\n </picture>\n</a>`
+    const embedDarkModeCode = `## Star History\n\n<a href="${typeof window !== "undefined" ? window.location.href : ""}">\n <picture>\n   <source media="(prefers-color-scheme: dark)" srcset="${apiBase}/svg?${buildQueryParams("dark")}" />\n   <source media="(prefers-color-scheme: light)" srcset="${apiBase}/svg?${buildQueryParams()}" />\n   <img alt="Star History Chart" src="${apiBase}/svg?${buildQueryParams()}" />\n </picture>\n</a>`
 
     const handleCopyBtnClick = () => {
         utils.copyTextToClipboard(embedCode)

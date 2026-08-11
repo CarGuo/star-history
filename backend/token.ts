@@ -18,18 +18,33 @@ let index = 0;
 const COOLDOWN_MS = 15 * 60 * 1000;
 const exhaustedUntil = new Map<string, number>();
 
+// Parse raw token text (newline or comma separated) into a token list.
+const parseTokens = (raw: string): string[] =>
+  raw
+    .split(/[\r\n,]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
 export const initTokenFromEnv = async () => {
-  if (!fs.existsSync(envFilePath)) {
-    logger.error("Token file not found with path ", envFilePath);
-    process.exit(-1);
-  }
-  const envTokenString = fs.readFileSync(envFilePath).toString();
-  if (!envTokenString) {
-    logger.error("Token not found");
-    process.exit(-1);
+  // Serverless platforms (e.g. Vercel) inject secrets via env variables instead of files.
+  // Use GITHUB_TOKENS (comma separated) or GITHUB_TOKEN there.
+  const envTokens = process.env.GITHUB_TOKENS || process.env.GITHUB_TOKEN;
+  let tokenList: string[];
+  if (envTokens) {
+    tokenList = parseTokens(envTokens);
+  } else {
+    if (!fs.existsSync(envFilePath)) {
+      logger.error("Token file not found with path ", envFilePath);
+      process.exit(-1);
+    }
+    const envTokenString = fs.readFileSync(envFilePath).toString();
+    if (!envTokenString) {
+      logger.error("Token not found");
+      process.exit(-1);
+    }
+    tokenList = parseTokens(envTokenString);
   }
 
-  const tokenList = envTokenString.split(/\r?\n/);
   // Call GitHub API to check token usability
   for (const token of tokenList) {
     try {
@@ -46,6 +61,28 @@ export const initTokenFromEnv = async () => {
   }
 
   logger.info(`Usable token amount: ${savedTokens.length}`);
+};
+
+// Lazily load tokens without validating them against the GitHub API.
+// Intended for serverless environments where init must be cheap and
+// process.exit would kill the whole runtime. Invalid tokens will simply
+// be marked as exhausted when requests hit the rate limit.
+export const initTokensLazy = () => {
+  if (savedTokens.length > 0) {
+    return;
+  }
+  const envTokens = process.env.GITHUB_TOKENS || process.env.GITHUB_TOKEN;
+  if (envTokens) {
+    savedTokens.push(...parseTokens(envTokens));
+    return;
+  }
+  try {
+    if (fs.existsSync(envFilePath)) {
+      savedTokens.push(...parseTokens(fs.readFileSync(envFilePath).toString()));
+    }
+  } catch (error) {
+    logger.error("Failed to load tokens lazily", error);
+  }
 };
 
 // Mark a token as rate-limited so it is skipped for COOLDOWN_MS.

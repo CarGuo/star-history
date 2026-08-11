@@ -134,3 +134,28 @@ cd backend && pnpm i && pnpm dev
 ```
 
 The API server will be running on http://localhost:8080.
+
+### Deploy to Vercel
+
+This fork supports deploying the **frontend + SVG API** as a single [Vercel](https://vercel.com) project:
+
+1. **Import the repo** into Vercel (keep the **repository root** as the project root). The included [`vercel.json`](vercel.json) takes care of everything:
+   - installs dependencies with pnpm,
+   - generates the repo dataset (`gh/data/*.json`) from the committed `gh/star.db`,
+   - builds the Next.js frontend,
+   - serves the chart API at `/svg` (rewritten to the `/api/svg` serverless function), so embed links keep the classic format:
+     ```html
+     <a href="https://<your-app>.vercel.app/#CarGuo/gsy_github_app_flutter&Date"><img src="https://<your-app>.vercel.app/svg?repos=CarGuo/gsy_github_app_flutter&type=Date"></a>
+     ```
+2. **Add a GitHub token** in *Project Settings → Environment Variables* (used by the API to fetch star histories from the GitHub API):
+   - `GITHUB_TOKEN` — a single token, or
+   - `GITHUB_TOKENS` — multiple comma-separated tokens (rotated automatically).
+3. **Deploy.** Every push to the default branch triggers a new deployment automatically.
+
+Locally you can preview the production build with:
+
+```shell
+cd frontend && pnpm i && pnpm run build:vercel && pnpm start
+```
+
+> Tip: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://<your-app>.vercel.app`) if you want absolute URLs in SEO metadata (og:url, canonical).

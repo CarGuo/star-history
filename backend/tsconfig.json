@@ -18,5 +18,8 @@
     "./*.ts",
     "../shared/**/*.ts",
     "../shared/**/*.tsx"
+  ],
+  "exclude": [
+    "vercel.ts"
   ]
 }
