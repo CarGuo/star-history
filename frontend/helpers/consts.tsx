@@ -12,7 +12,9 @@ export const EASTER_EGG_REPOS = new Set(["openclaw/openclaw"])
 const isVercel = Boolean(process.env.NEXT_PUBLIC_VERCEL || process.env.VERCEL)
 // NEXT_PUBLIC_VERCEL_URL can be set (e.g. to the production domain) so SEO
 // metadata points at the canonical site instead of the preview URL. When it
-// is not set we fall back to VERCEL_URL (the deployment URL).
+// is not set we fall back to VERCEL_URL (the deployment URL), which Vercel
+// sets automatically at build time — note it is server/build-only, so the
+// client-side value comes from the prerendered HTML.
 const vercelHost = process.env.NEXT_PUBLIC_VERCEL_URL || process.env.VERCEL_URL || ""
 const vercelOrigin = vercelHost ? `https://${vercelHost}` : ""
 
