@@ -73,7 +73,9 @@ export const createApp = (repoStore: RepoStore) => {
       // re-encode the query and break `repos=a/b`).
       const others = Array.from(params.entries())
         .filter(([key]) => key !== "repos")
-        .map(([key, value]) => (value === "" ? key : `${key}=${value}`))
+        .map(([key, value]) =>
+          value === "" ? encodeURIComponent(key) : `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+        )
         .join("&");
       return c.redirect(`/api/svg?repos=${normalized}${others ? `&${others}` : ""}`, 301);
     }
