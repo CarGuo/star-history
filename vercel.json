@@ -3,9 +3,10 @@
   "installCommand": "pnpm install && cd frontend && pnpm install",
   "buildCommand": "cd gh && pnpm install && pnpm run star:generate && cd ../frontend && pnpm run build:vercel",
   "outputDirectory": "frontend/.next",
-  "rewrites": [
-    { "source": "/svg", "destination": "/api/svg" },
-    { "source": "/svg/", "destination": "/api/svg" },
-    { "source": "/healthz", "destination": "/api/healthz" }
-  ]
+  // Note: the /svg → /api/svg rewrites live in next.config.js (rewrites())
+  // instead of here. vercel.json rewrites are filesystem-aware on Vercel —
+  // with the Next.js pages dir present, they never reach the /api functions
+  // and /svg 404s. next.config.js rewrites go into routes-manifest.json and
+  // are evaluated at routing time, which reliably hits the API function.
+  "rewrites": []
 }
