@@ -139,8 +139,8 @@ The API server will be running on http://localhost:8080.
 
 This fork supports deploying the **frontend + SVG API** as a single [Vercel](https://vercel.com) project:
 
-1. **Import the repo** into Vercel (keep the **repository root** as the project root). The included [`vercel.json`](vercel.json) takes care of everything:
-   - explicitly selects the Next.js framework preset; the repository-root dependency manifest otherwise makes Vercel detect `Other` and publish `frontend/.next` as static files, producing a deployment-wide 404,
+1. **Import the repo** into Vercel, set **Root Directory** to `frontend`, and keep **Include source files outside of the Root Directory** enabled so the frontend can bundle `backend`, `shared`, and generated `gh/data` files. The included [`frontend/vercel.json`](frontend/vercel.json) takes care of everything:
+   - explicitly selects the Next.js framework preset from the directory that owns the Next.js dependency; deploying from the repository root makes Vercel detect `Other` and publish `.next` as static files, producing a deployment-wide 404,
    - installs dependencies with pnpm,
    - generates the repo dataset (`gh/data/*.json`) from the committed `gh/star.db`,
    - builds the Next.js frontend,
