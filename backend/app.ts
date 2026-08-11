@@ -16,7 +16,7 @@ import {
 import { getNextToken, markTokenExhausted } from "./token.js";
 import { CHART_SIZES, MAX_REQUEST_AMOUNT, MAX_REPOS_PER_REQUEST } from "./const.js";
 import { renderOgCard } from "./og-card.js";
-import { loadRepos, RepoStore } from "../shared/common/repo-data.js";
+import type { RepoStore } from "../shared/common/repo-data.js";
 
 const SVG_HEADERS = {
   "Content-Type": "image/svg+xml;charset=utf-8",

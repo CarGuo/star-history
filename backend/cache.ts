@@ -1,6 +1,15 @@
-import { LRUCache } from "lru-cache";
+import type LRUCacheType from "lru-cache";
 import utils from "../shared/common/utils.js";
 import type { StarRecord } from "../shared/types/chart";
+
+// lru-cache v7 (backend, tsx) exposes the class as the CJS default export,
+// while v10 (resolved by the frontend webpack bundle) is an __esModule with
+// only a named export. Resolve both shapes at runtime so this file works in
+// the node server and in the Vercel serverless bundle.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const lruModule = require("lru-cache");
+type LRUCacheCtor = new <K, V>(options: Record<string, unknown>) => LRUCacheType<K, V>;
+const LRUCache = (lruModule.LRUCache ?? lruModule.default ?? lruModule) as LRUCacheCtor;
 
 /**
  * A repo star data is type of RepoStarData, and its memory costs might be 896 bytes.
@@ -40,7 +49,7 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(1)} ${units[i]}`;
 }
 
-function cacheStats(name: CacheName, c: LRUCache<string, unknown>) {
+function cacheStats(name: CacheName, c: LRUCacheType<string, unknown>) {
   const { hits, misses } = counters[name];
   const total = hits + misses;
   return {
@@ -54,9 +63,9 @@ function cacheStats(name: CacheName, c: LRUCache<string, unknown>) {
 
 export function getAllCacheStats() {
   return {
-    starData: cacheStats("starData", cache as LRUCache<string, unknown>),
-    svgChart: cacheStats("svgChart", svgCache as LRUCache<string, unknown>),
-    ogCard: cacheStats("ogCard", ogCardCache as LRUCache<string, unknown>),
+    starData: cacheStats("starData", cache as LRUCacheType<string, unknown>),
+    svgChart: cacheStats("svgChart", svgCache as LRUCacheType<string, unknown>),
+    ogCard: cacheStats("ogCard", ogCardCache as LRUCacheType<string, unknown>),
   };
 }
 
