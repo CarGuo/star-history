@@ -11,6 +11,31 @@ const getGitHubHeaders = (token?: string, accept = "application/vnd.github+json"
     ...(token ? { Authorization: `Bearer ${token}` } : {})
 })
 
+const getResponseHeader = (headers: any, name: string): string | undefined => {
+    if (!headers) return undefined
+    const value = typeof headers.get === "function"
+        ? headers.get(name)
+        : headers[name] ?? headers[name.toLowerCase()]
+    return value === null || value === undefined ? undefined : String(value)
+}
+
+// 2026-08: GitHub uses 403 for both rate limits and authorization failures.
+// Only cool down a token when GitHub supplies an actual rate-limit signal;
+// otherwise one repository permission error would disable the entire pool.
+export const isGitHubRateLimitError = (errorOrResponse: any): boolean => {
+    const response = errorOrResponse?.response ?? errorOrResponse
+    const status = response?.status ?? errorOrResponse?.status
+    const headers = response?.headers
+    const remaining = getResponseHeader(headers, "x-ratelimit-remaining")
+    const retryAfter = getResponseHeader(headers, "retry-after")
+    const message = String(response?.data?.message ?? errorOrResponse?.message ?? "")
+
+    return status === 429
+        || remaining === "0"
+        || retryAfter !== undefined
+        || (status === 403 && /(?:secondary\s+)?rate\s*limit|abuse detection/i.test(message))
+}
+
 namespace api {
     export async function getRepoStargazers(repo: string, token?: string, page?: number) {
         let url = `https://api.github.com/repos/${repo}/stargazers?per_page=${API_PER_PAGE}`

@@ -1,6 +1,6 @@
 import { XYChartData, XYData } from "../packages/xy-chart"
 import { ChartMode, RepoStarData, RepoData } from "../types/chart"
-import api from "./api"
+import api, { isGitHubRateLimitError } from "./api"
 import utils from "./utils"
 
 export interface ChartDataOptions {
@@ -13,6 +13,7 @@ const getRepoRequestError = async (error: any, repo: string, token: string) => {
     const responseStatus = error?.response?.status ?? error?.status
     let message = "Some unexpected error happened, try again later"
     let status = 500
+    let rateLimited = isGitHubRateLimitError(error)
 
     if (responseStatus === 404) {
         // 2026-08: GitHub conceals restricted stargazer lists as 404. Probe the
@@ -23,14 +24,27 @@ const getRepoRequestError = async (error: any, repo: string, token: string) => {
             message = `GitHub token cannot access stargazer history for ${repo}; the token owner must be a repository admin or collaborator`
             status = 403
         } catch (metadataError: any) {
-            if ((metadataError?.response?.status ?? metadataError?.status) === 404) {
+            if (isGitHubRateLimitError(metadataError)) {
+                message = "GitHub API rate limit exceeded"
+                status = 429
+                rateLimited = true
+            } else if ((metadataError?.response?.status ?? metadataError?.status) === 404) {
                 message = `Repo ${repo} not found`
                 status = 404
             }
         }
     } else if (responseStatus === 403) {
-        message = "GitHub API rate limit exceeded or stargazer access is restricted"
-        status = 403
+        if (rateLimited) {
+            message = "GitHub API rate limit exceeded"
+            status = 429
+        } else {
+            message = `GitHub token cannot access stargazer history for ${repo}; the token owner must be a repository admin or collaborator`
+            status = 403
+        }
+    } else if (responseStatus === 429) {
+        message = "GitHub API rate limit exceeded"
+        status = 429
+        rateLimited = true
     } else if (responseStatus === 401) {
         message = "Access Token Unauthorized"
         status = 401
@@ -39,7 +53,7 @@ const getRepoRequestError = async (error: any, repo: string, token: string) => {
         status = 501
     }
 
-    return { message, status, repo }
+    return { message, status, repo, rateLimited }
 }
 
 export const getReposStarData = async (repos: string[], token = "", maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoStarData[]> => {

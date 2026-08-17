@@ -17,6 +17,7 @@ import { getNextToken, getTokenStatus, markTokenExhausted } from "./token.js";
 import { CHART_SIZES, MAX_REQUEST_AMOUNT, MAX_REPOS_PER_REQUEST } from "./const.js";
 import { renderOgCard } from "./og-card.js";
 import type { RepoStore } from "../shared/common/repo-data.js";
+import { isGitHubRateLimitError } from "../shared/common/api.js";
 
 const SVG_HEADERS = {
   "Content-Type": "image/svg+xml;charset=utf-8",
@@ -121,7 +122,10 @@ export const createApp = (repoStore: RepoStore) => {
           headers: { Authorization: `token ${token}`, Accept: "application/json" },
           signal: AbortSignal.timeout(15000),
         });
-        if (res.status === 403) {
+        // 2026-08: a GitHub 403 is not necessarily a rate limit. Keep the
+        // token available for other repositories unless GitHub says its quota
+        // is actually exhausted.
+        if (isGitHubRateLimitError(res)) {
           markTokenExhausted(token);
         }
         if (!res.ok) {
@@ -234,7 +238,7 @@ export const createApp = (repoStore: RepoStore) => {
         const message =
           error.message || "Some unexpected error happened, try again later";
 
-        if (status === 403) {
+        if (error.rateLimited === true) {
           markTokenExhausted(token);
         }
 
