@@ -1,165 +1,267 @@
+<!-- Documentation version: 2026-08-17. Rewritten for the supported Vercel monorepo deployment flow and GitHub's stargazer access restrictions. -->
+
 <div align="center">
+  <img src="assets/logo-full.svg" alt="Star History" width="360" />
 
-🧩 [**Also available as a Chrome extension**](https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn)
+  # Star History · Vercel 部署版
 
-<a href="https://www.star-history.com/star-history/star-history">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=star-history/star-history&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=star-history/star-history" />
-   <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=star-history/star-history" />
- </picture>
-</a>
+  在一个 Vercel 项目中部署 Star History 网站和 SVG API，生成并对比 GitHub 仓库的 Star 趋势图。
 
-# :sparkles: Star History :sparkles:
- 
-[**star-history.com**](https://star-history.com), **the de facto GitHub star history graph.**
-
-<img src="https://raw.githubusercontent.com/star-history/star-history/main/assets/nvidia-gtc-2026.webp" />
-
+  [上游项目](https://github.com/star-history/star-history) · [许可证](LICENSE)
 </div>
 
----
+## 项目说明
 
-👇 **THIS** is a **`live`** chart. Follow [instruction](https://www.star-history.com/blog/how-to-use-github-star-history#how-to-embed-the-chart-in-your-readme) to embed yours.
+本仓库基于开源项目 [star-history/star-history](https://github.com/star-history/star-history)，并补齐了适用于 Vercel 的单项目部署方式：
 
-<a href="https://www.star-history.com/?repos=star-history%2Fstar-history&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=star-history/star-history&type=date&theme=dark&legend=top-left&sealed_token=DYeTWCAopiiE2umbQNPumg8YbPnyodS4lGzIhhCvVVvIuGqF2y_EHByyowTpVnmds-frpmYYKc_awzVeAxZ7O3gT7Mu6l8V7DlZ8BaIkBoGcWPhLwZrdWA" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=star-history/star-history&type=date&legend=top-left&sealed_token=DYeTWCAopiiE2umbQNPumg8YbPnyodS4lGzIhhCvVVvIuGqF2y_EHByyowTpVnmds-frpmYYKc_awzVeAxZ7O3gT7Mu6l8V7DlZ8BaIkBoGcWPhLwZrdWA" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=star-history/star-history&type=date&legend=top-left&sealed_token=DYeTWCAopiiE2umbQNPumg8YbPnyodS4lGzIhhCvVVvIuGqF2y_EHByyowTpVnmds-frpmYYKc_awzVeAxZ7O3gT7Mu6l8V7DlZ8BaIkBoGcWPhLwZrdWA" />
- </picture>
-</a>
+- Next.js 网站和 SVG API 使用同一个 Vercel 域名；
+- `/svg` 自动路由到 Vercel Serverless Function；
+- 支持单仓库和多仓库对比，单次最多 20 个仓库；
+- 支持日期、时间线、深色主题、对数坐标、透明背景和多种尺寸；
+- 提供 `/healthz` 健康检查，显示 token 加载状态和缓存统计；
+- 对 token 无效、仓库无权限和真正的 GitHub API 限流给出不同错误，不再把权限错误渲染成空图。
 
-<div align="left">
-  
-👇 **THIS** is also a **`live`** badge with global rank. Follow [instruction](https://www.star-history.com/star-history/star-history#badges) to embed yours.
+> [!IMPORTANT]
+> GitHub 自 2026 年 7 月起限制 stargazer 列表接口。即使目标仓库是公开仓库，调用 token 所属用户仍必须是该仓库的管理员或协作者，才能读取完整的 Star 历史。详见 [GitHub 官方公告](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/)。
 
-<p align="left">
- <a href="https://www.star-history.com/star-history/star-history">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=star-history/star-history&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=star-history/star-history" />
-    <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=star-history/star-history" />
-  </picture>
- </a>
-</p>
+## 部署到 Vercel
 
-</div>
+### 1. 导入仓库
 
-## 🎁 Sponsors
+先 Fork 本仓库，然后在 Vercel 中选择 **Add New → Project**，导入你的 Fork。
 
-### Bytebase
+项目设置必须使用以下值：
 
-[Bytebase](https://bytebase.com?source=star-history) is an open source, web-based database schema change and version control tool for teams. Supporting MySQL, PostgreSQL, Oracle, MongoDB, Redis, Snowflake, ClickHouse, TiDB, Google Spanner.
+| 设置 | 值 |
+| --- | --- |
+| Framework Preset | `Next.js` |
+| Root Directory | `frontend` |
+| Include source files outside of the Root Directory in the Build Step | 开启 |
 
-<a href="https://bytebase.com?source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/bytebase/landing.webp" /></a>
+不要把仓库根目录作为 Vercel Root Directory。项目的 Next.js 依赖位于 `frontend`，而运行时还需要读取根目录中的 `backend`、`shared` 和 `gh`。仓库已经在 [`frontend/vercel.json`](frontend/vercel.json) 中定义了安装、数据生成和构建命令，无需在控制台重复覆盖。
 
-### Dify
+### 2. 配置 GitHub token
 
-[Dify](https://dify.ai/?utm_source=star-history) is an open source LLMOps platform that helps developers build AI applications more simply and quickly. Its core idea is to define various aspects of AI applications, including Prompts, Contexts, and Plugins, through declarative YAML files.
+在 **Project Settings → Environment Variables** 中配置下列变量：
 
-<a href="https://dify.ai/?utm_source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/dify/landing.webp" /></a>
+| 变量 | 是否必需 | 用途 |
+| --- | --- | --- |
+| `GITHUB_TOKEN` | 是，除非使用 `GITHUB_TOKENS` | 单个 GitHub token |
+| `GITHUB_TOKENS` | 否 | 多个 token，以逗号或换行分隔；请求时自动轮换 |
+| `NEXT_PUBLIC_SITE_URL` | 否 | 网站的固定公开地址，例如 `https://stars.example.com` |
 
-### SerpApi
+如果两个 token 变量都存在，`GITHUB_TOKENS` 优先。建议把变量标记为 **Sensitive**，并至少应用到 **Production**；如果需要验证 Preview Deployment，再同时应用到 **Preview**。
 
-[SerpApi](https://serpapi.com/?utm_source=starhistory) scrapes search engine results easily using a simple API, including Google, Google Maps, Amazon, and more
+配置 token 时需要同时满足：
 
-<a href="https://serpapi.com/?utm_source=starhistory"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/serpapi/landing.webp" /></a>
+1. token 本身有效，能够通过 GitHub 身份认证；
+2. token 所属用户是每个目标仓库的管理员或协作者；
+3. Fine-grained PAT 已选择目标仓库，并至少授予只读 `Metadata` 权限。
 
-### pgplex
+公开仓库并不再等于公开 stargazer 历史。一个普通 GitHub 用户的有效 token，无法读取该用户没有管理或协作权限的仓库历史。
 
-[pgplex](https://www.pgplex.com/?utm_source=starhistory) is the Postgres toolchain for humans and agents
+> [!CAUTION]
+> 不要把 token 写进代码、README、URL、提交记录或日志。token 一旦泄露，应立即在 GitHub 中撤销或轮换。
 
-<a href="https://www.pgplex.com/?utm_source=starhistory"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/pgplex/landing.webp" /></a>
+### 3. 保证图片接口可以公开访问
 
-## ✨ Features
+GitHub README、网页 `<img>` 和无痕浏览器都不会携带你的 Vercel 登录状态，因此图片 URL 必须公开访问。
 
-- **Unique** **`sketch xkcd`** feeling **chart**;
-- **One-click** generation of **high-quality** image for chart;
-- Support **multiple chart view** mode **`based on date or timeline`**;
-- **Embed** the **real-time chart** into **`GitHub readme or other websites`** **(like the one we embed here on the top)**
-- And **various** useful **functions**:
-  - toggle **repo visibility**;
-  - **shortcut** to input repo;
-  - **share** on **`Twitter`** **quickly**;
-  - **support** input **multiple repos**;
-  - ...waiting **for you** to **find out!**
+在 **Project Settings → Deployment Protection** 中使用允许 Production Domain 公开访问的配置。通常可使用 **Standard Protection**，然后只在 README 中使用 Vercel **Domains** 页面列出的 Production Domain 或自定义域名。不要使用需要登录的 Preview URL 或受保护的生成式 Deployment URL。
 
-## 🌠 Screenshots
+最直接的检查方法：在无痕窗口打开下方 `/svg` 地址。如果出现 Vercel 登录页、`/sso-api` 跳转或 HTML，而不是 SVG 图片，说明问题在 Deployment Protection 或所用域名，不在图表代码。
 
-<a href="https://star-history.com"><img width="800px" src="https://user-images.githubusercontent.com/24653555/154391264-312b448b-f851-41bf-bb8d-4c21ec6795b6.gif" />
-</a>
+### 4. 部署
 
-### 🧩 [Free chrome extension](https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn)
+点击 **Deploy**。以后每次修改环境变量，都必须重新创建一次 Production Deployment；旧部署不会自动获得新值。
 
-<a href="https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn"><img width="800px" src="https://user-images.githubusercontent.com/24653555/154391326-61b65d8f-3f9f-4432-b773-5988be75b0ea.png" /></a>
+## 部署后验证
 
-## 🏗 Development
+将 `<your-production-domain>` 替换为 Vercel Domains 页面中的公开生产域名，不要包含末尾 `/`。
 
-> We do not accept external contribution.
+### 健康检查
 
-**`Star-history`** is built using a **modern tech stack**: **`Next.js`** + **`TailwindCSS`**.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/en/download/)
-- [pnpm](https://pnpm.io/)
-
-### Homepage
-
-**Homepage** of star-history with most of useful features and blogs about open source.
-
-```shell
-cd frontend && pnpm i && pnpm dev
+```text
+https://<your-production-domain>/healthz
 ```
 
-The website will be served at http://localhost:3000.
+正常响应示例：
 
-### Chrome Extension
-
-**Chrome extension** supports the **basic chart viewer** as a **free** additional product.
-
-```shell
-cd frontend && pnpm build:ext
+```json
+{
+  "status": "OK",
+  "githubToken": {
+    "source": "GITHUB_TOKEN",
+    "configuredCount": 1,
+    "usableCount": 1
+  }
+}
 ```
 
-Load the built `./dist` folder as **unpacked project** to chrome extensions page.
+`usableCount: 1` 只表示 token 可以登录 GitHub；目标仓库权限仍需通过实际 `/svg` 请求验证。
 
-### API Server
+### 单仓库
 
-**API server** is an **`experimental feature`**. It's mainly used to **generate chart `SVG`** image file that can be embeded into **`GitHub readme`**.
-
-```shell
-cd backend && pnpm i && pnpm dev
+```text
+https://<your-production-domain>/svg?repos=carguo/gsy_github_app_flutter&type=Date
 ```
 
-The API server will be running on http://localhost:8080.
+### 多仓库
 
-### Deploy to Vercel
-
-This fork supports deploying the **frontend + SVG API** as a single [Vercel](https://vercel.com) project:
-
-1. **Import the repo** into Vercel, set **Root Directory** to `frontend`, and keep **Include source files outside of the Root Directory** enabled so the frontend can bundle `backend`, `shared`, and generated `gh/data` files. The included [`frontend/vercel.json`](frontend/vercel.json) takes care of everything:
-   - explicitly selects the Next.js framework preset from the directory that owns the Next.js dependency; deploying from the repository root makes Vercel detect `Other` and publish `.next` as static files, producing a deployment-wide 404,
-   - installs dependencies with pnpm,
-   - generates the repo dataset (`gh/data/*.json`) from the committed `gh/star.db`,
-   - builds the Next.js frontend,
-   - serves the chart API at `/svg` (rewritten to the `/api/svg` serverless function), so embed links keep the classic format:
-     ```html
-     <a href="https://<your-app>.vercel.app/#CarGuo/gsy_github_app_flutter&Date"><img src="https://<your-app>.vercel.app/svg?repos=CarGuo/gsy_github_app_flutter&type=Date"></a>
-     ```
-2. **Add a GitHub token** in *Project Settings → Environment Variables* (used by the API to fetch star histories from the GitHub API):
-   - `GITHUB_TOKEN` — a single token, or
-   - `GITHUB_TOKENS` — multiple comma-separated tokens (rotated automatically).
-   Since GitHub's July 2026 stargazer API restriction, the token owner must be an admin or collaborator of every repository whose history is requested. See the [GitHub announcement](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/).
-3. **Deploy.** Every push to the default branch triggers a new deployment automatically.
-
-For README embeds and other anonymous clients, disable **Vercel Authentication** for the Production environment in *Project Settings → Deployment Protection*. Preview deployments can remain protected.
-
-Locally you can preview the production build with:
-
-```shell
-pnpm i && cd gh && pnpm i && pnpm run star:generate && cd ../frontend && pnpm i && pnpm run build:vercel && pnpm start
+```text
+https://<your-production-domain>/svg?repos=carguo/gsy_github_app_flutter,carguo/gsyvideoplayer,carguo/gsy_flutter_demo,carguo/gsy_flutter_book&type=Date
 ```
 
-> Tip: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://<your-app>.vercel.app`) if you want absolute URLs in SEO metadata (og:url, canonical).
+也可以在 PowerShell 中检查状态码和响应类型：
+
+```powershell
+curl.exe -sS -D - -o NUL "https://<your-production-domain>/svg?repos=carguo/gsy_github_app_flutter&type=Date"
+```
+
+正确结果应为 `200`，且 `Content-Type` 为 `image/svg+xml`。`/api/svg` 是 Vercel 的直接函数路由，也可以访问；对外嵌入建议统一使用稳定入口 `/svg`。
+
+## 在 README 中嵌入图表
+
+单仓库：
+
+```markdown
+[![Star History Chart](https://<your-production-domain>/svg?repos=owner/repo&type=Date)](https://github.com/owner/repo)
+```
+
+多仓库对比：
+
+```markdown
+![Star History Chart](https://<your-production-domain>/svg?repos=owner/repo,owner/another-repo&type=Date)
+```
+
+自动适配 GitHub 深色模式：
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://<your-production-domain>/svg?repos=owner/repo&type=Date&theme=dark" />
+  <source media="(prefers-color-scheme: light)" srcset="https://<your-production-domain>/svg?repos=owner/repo&type=Date" />
+  <img alt="Star History Chart" src="https://<your-production-domain>/svg?repos=owner/repo&type=Date" />
+</picture>
+```
+
+## SVG 参数
+
+| 参数 | 必需 | 可选值 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `repos` | 是 | `owner/repo`，多个用逗号分隔 | — | 最多 20 个仓库，GitHub 名称不区分大小写 |
+| `type` | 否 | `Date`、`Timeline` | `Date` | 按日期或项目相对时间绘图 |
+| `theme` | 否 | `light`、`dark` | `light` | 图表主题 |
+| `size` | 否 | `mobile`、`laptop`、`desktop` | `laptop` | 图表宽度 |
+| `legend` | 否 | `top-left`、`bottom-right` | `top-left` | 图例位置 |
+| `logscale` | 否 | `true`、`false`，也可只写参数名 | `false` | 使用对数纵轴 |
+| `transparent` | 否 | `true`、`false` | `false` | 透明背景 |
+
+示例：
+
+```text
+https://<your-production-domain>/svg?repos=owner/repo,owner/another-repo&type=Timeline&theme=dark&legend=bottom-right&logscale=true&transparent=true&size=desktop
+```
+
+## 本地开发
+
+要求：Node.js 18+、pnpm 9。
+
+首次安装并生成构建数据：
+
+```powershell
+pnpm install
+
+Push-Location gh
+pnpm install
+pnpm run star:generate
+Pop-Location
+
+Push-Location frontend
+pnpm install
+Pop-Location
+```
+
+启动与 Vercel 相同的 Next.js 网站和 API：
+
+```powershell
+Set-Location frontend
+$env:GITHUB_TOKEN = "<your-token>"
+$env:NEXT_PUBLIC_API_URL = "http://localhost:3000"
+pnpm dev
+```
+
+访问：
+
+```text
+http://localhost:3000/
+http://localhost:3000/healthz
+http://localhost:3000/svg?repos=owner/repo&type=Date
+```
+
+仅调试独立后端时：
+
+```powershell
+Set-Location backend
+$env:GITHUB_TOKEN = "<your-token>"
+pnpm install
+pnpm dev
+```
+
+独立后端默认监听 `http://localhost:8080`。
+
+## 验证修改
+
+```powershell
+Push-Location backend
+pnpm test
+pnpm run build
+Pop-Location
+
+Push-Location gh
+pnpm test
+pnpm run star:generate
+Pop-Location
+
+Push-Location frontend
+pnpm run build:vercel
+Pop-Location
+```
+
+## 常见问题
+
+| 现象 | 根因 | 处理方式 |
+| --- | --- | --- |
+| 整个站点或 `/svg` 返回 Vercel 404 | Root Directory 或构建配置错误 | Root Directory 设为 `frontend`，开启构建时包含根目录外源码，使用仓库内 `frontend/vercel.json` |
+| 无痕访问要求登录 | 使用了受保护的 Preview/Deployment URL，或 Production 也开启了强制保护 | 调整 Deployment Protection，并改用 Domains 中的公开 Production Domain |
+| `GitHub token initialization failed` | 环境变量不存在、值无效或新变量尚未进入部署 | 检查变量作用环境并重新部署 |
+| `GitHub token cannot access stargazer history...` | token 有效，但所属用户不是目标仓库管理员/协作者 | 换成具备目标仓库权限的用户 token；不能靠扩大无关 scope 绕过 |
+| `GitHub API rate limit exceeded` | GitHub 明确返回限流信息 | 等待配额恢复，或通过 `GITHUB_TOKENS` 配置多个均具备仓库权限的 token |
+| 图中只有坐标轴、没有数据 | 旧版本把权限失败误当成空数据 | 更新到最新提交并重新部署；当前版本会返回明确的 403/404/429 错误 |
+| 修改环境变量后结果不变 | 正在访问旧部署，或没有重新部署 | 从 Domains 确认 Production Domain，并创建新的 Production Deployment |
+| 多仓库首次加载较慢 | 冷启动需要分页读取每个仓库的 stargazer 数据 | 等待首次请求完成；成功结果会缓存。仓库越多，请求越慢 |
+
+## 目录结构
+
+```text
+star-history/
+├── backend/             # Hono 图表 API、GitHub token 和缓存逻辑
+├── frontend/            # Next.js 网站、Vercel API 适配器与部署配置
+├── gh/                  # 排行榜数据生成脚本和静态数据源
+├── shared/              # 前后端共享的图表、API 与类型代码
+└── assets/              # 项目图片资源
+```
+
+Vercel 请求链路：
+
+```text
+公开域名 /svg
+  → Next.js rewrite
+  → /api/svg Serverless Function
+  → Hono 图表服务
+  → GitHub API
+  → SVG 响应与缓存
+```
+
+## 上游与许可证
+
+本仓库延续上游 [Star History](https://github.com/star-history/star-history) 的开源实现与版权声明。项目许可证见 [LICENSE](LICENSE)。
